@@ -1,0 +1,66 @@
+---
+# tasks file for graylog-sidecar
+
+# Remove collector-sidecare
+# yum remove collector-sidecar
+
+- name: Remove collector-sidecare
+  yum: 
+    name: collector-sidecar
+    state: removed
+
+# Clean collector-sidecar folders
+# /etc/graylog/collector-sidecar
+# /var/cache/graylog/collector-sidecar
+# /var/log/graylog/collector-sidecar
+
+- name: Clean-up old collector-sidecar files and folders
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /var/log/graylog/collector-sidecar
+    - /var/cache/graylog/collector-sidecar
+    - /etc/graylog/collector-sidecar
+
+
+# Install graylog-sidecar
+# rpm -Uvh https://packages.graylog2.org/repo/packages/graylog-sidecar-repository-1-2.noarch.rpm
+# yum install graylog-sidecar
+
+- name: Install graylog-sidecar repository
+  yum:
+    name: https://packages.graylog2.org/repo/packages/graylog-sidecar-repository-1-2.noarch.rpm
+    state: installed
+
+- name: Install graylog-sidecar
+  yum:
+    name: graylog-sidecar
+    state: latest
+
+- name: Enable graylog-sidecar service
+  service:
+    name: graylog-sidecar
+    state: enabled
+
+- name: Configure graylog-sidecar - server_url
+  lineinfile:
+    path: /etc/graylog/sidecar/sidecar.yml
+    line: 'server_url: http://log.server.ly:9000/api/'
+
+- name: Configure graylog-sidecar - server_api_token
+  lineinfile:
+    path: /etc/graylog/sidecar/sidecar.yml
+    line: 'server_api_token: "12evgua1kig8c1jgj8kkgpn9ugrhr5bcqbnckurj4a6u1pst4nn9"'
+
+# Install Filebeat
+# https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.8.1-x86_64.rpm
+
+- name: Install filebeat
+  yum:
+    name: https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.8.1-x86_64.rpm
+    state: installed
+
+# Add firewall ports
+# Add handlers to restart graylog-sidecar
+
