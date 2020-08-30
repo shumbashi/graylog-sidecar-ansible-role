@@ -11,7 +11,7 @@
   ignore_errors: true
 
 - name: Remove collector-sidecare
-  yum: 
+  yum:
     name: collector-sidecar
     state: removed
   ignore_errors: true
@@ -30,7 +30,7 @@
     - /var/cache/graylog/collector-sidecar
     - /etc/graylog/collector-sidecar
 
-# Install graylog-sidecar 
+# Install graylog-sidecar
 
 - name: Download graylog-sidecar repository
   get_url:
@@ -50,7 +50,7 @@
   register: graylog_sidecar_installed
 
 - name: Install graylog-sidecard service
-  shell: graylog-sidecar -service install
+  command: graylog-sidecar -service install
   when: graylog_sidecar_installed.changed
 
 - name: Enable graylog-sidecar service
@@ -61,13 +61,13 @@
 - name: Configure graylog-sidecar - server_url
   lineinfile:
     path: /etc/graylog/sidecar/sidecar.yml
-    line: 'server_url: {{graylog_url}}'
+    line: 'server_url: {{ graylog_url }}'
   notify: restart graylog-sidecar
 
 - name: Configure graylog-sidecar - server_api_token
   lineinfile:
     path: /etc/graylog/sidecar/sidecar.yml
-    line: 'server_api_token: "{{graylog_api_token}}"'
+    line: 'server_api_token: "{{ graylog_api_token }}"'
   notify: restart graylog-sidecar
 
 # Install Filebeat
@@ -78,4 +78,3 @@
     name: https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.8.1-x86_64.rpm
     state: installed
   notify: restart graylog-sidecar
-
