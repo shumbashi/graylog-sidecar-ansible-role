@@ -4,10 +4,17 @@
 # Remove collector-sidecare
 # yum remove collector-sidecar
 
+- name: Stop collector-sidecar service
+  service:
+    name: collector-sidecar
+    state: stopped
+  ignore_errors: true
+
 - name: Remove collector-sidecare
   yum: 
     name: collector-sidecar
     state: removed
+  ignore_errors: true
 
 # Clean collector-sidecar folders
 # /etc/graylog/collector-sidecar
@@ -23,35 +30,45 @@
     - /var/cache/graylog/collector-sidecar
     - /etc/graylog/collector-sidecar
 
+# Install graylog-sidecar 
 
-# Install graylog-sidecar
-# rpm -Uvh https://packages.graylog2.org/repo/packages/graylog-sidecar-repository-1-2.noarch.rpm
-# yum install graylog-sidecar
+- name: Download graylog-sidecar repository
+  get_url:
+    url: https://packages.graylog2.org/repo/packages/graylog-sidecar-repository-1-2.noarch.rpm
+    dest: /tmp/graylog-sidecar-repository-1-2.noarch.rpm
+    force: no
 
 - name: Install graylog-sidecar repository
   yum:
-    name: https://packages.graylog2.org/repo/packages/graylog-sidecar-repository-1-2.noarch.rpm
+    name: /tmp/graylog-sidecar-repository-1-2.noarch.rpm
     state: installed
 
 - name: Install graylog-sidecar
   yum:
     name: graylog-sidecar
-    state: latest
+    state: installed
+  register: graylog_sidecar_installed
+
+- name: Install graylog-sidecard service
+  shell: graylog-sidecar -service install
+  when: graylog_sidecar_installed.changed
 
 - name: Enable graylog-sidecar service
   service:
     name: graylog-sidecar
-    state: enabled
+    enabled: yes
 
 - name: Configure graylog-sidecar - server_url
   lineinfile:
     path: /etc/graylog/sidecar/sidecar.yml
-    line: 'server_url: http://log.server.ly:9000/api/'
+    line: 'server_url: {{graylog_url}}'
+  notify: restart graylog-sidecar
 
 - name: Configure graylog-sidecar - server_api_token
   lineinfile:
     path: /etc/graylog/sidecar/sidecar.yml
-    line: 'server_api_token: "12evgua1kig8c1jgj8kkgpn9ugrhr5bcqbnckurj4a6u1pst4nn9"'
+    line: 'server_api_token: "{{graylog_api_token}}"'
+  notify: restart graylog-sidecar
 
 # Install Filebeat
 # https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.8.1-x86_64.rpm
@@ -60,7 +77,5 @@
   yum:
     name: https://artifacts.elastic.co/downloads/beats/filebeat/filebeat-7.8.1-x86_64.rpm
     state: installed
-
-# Add firewall ports
-# Add handlers to restart graylog-sidecar
+  notify: restart graylog-sidecar
 
